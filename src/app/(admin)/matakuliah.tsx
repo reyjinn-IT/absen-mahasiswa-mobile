@@ -1,0 +1,172 @@
+import { useState, useEffect, useCallback } from 'react';
+import {
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+  Alert,
+  Modal,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Spacing } from '@/constants/theme';
+import { adminService, type Matakuliah } from '@/services/admin';
+
+export default function AdminMatakuliahScreen() {
+  const [data, setData] = useState<Matakuliah[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editing, setEditing] = useState<Matakuliah | null>(null);
+  const [formNama, setFormNama] = useState('');
+  const [formKode, setFormKode] = useState('');
+  const [formSks, setFormSks] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await adminService.getMatakuliah();
+      setData(res);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const openCreate = () => {
+    setEditing(null);
+    setFormNama('');
+    setFormKode('');
+    setFormSks('');
+    setModalVisible(true);
+  };
+
+  const openEdit = (m: Matakuliah) => {
+    setEditing(m);
+    setFormNama(m.nama);
+    setFormKode(m.kode);
+    setFormSks(String(m.sks));
+    setModalVisible(true);
+  };
+
+  const handleSave = async () => {
+    if (!formNama || !formKode) return;
+    setSaving(true);
+    try {
+      const payload = { nama: formNama, kode: formKode, sks: parseInt(formSks, 10) || 3 };
+      if (editing) {
+        await adminService.updateMatakuliah(editing.id, payload);
+      } else {
+        await adminService.createMatakuliah(payload);
+      }
+      setModalVisible(false);
+      fetchData();
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Gagal menyimpan');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = (id: number, nama: string) => {
+    Alert.alert('Hapus Matakuliah', `Yakin hapus "${nama}"?`, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Hapus', style: 'destructive', onPress: async () => {
+        try { await adminService.deleteMatakuliah(id); fetchData(); }
+        catch (e) { Alert.alert('Error', e instanceof Error ? e.message : 'Gagal'); }
+      }},
+    ]);
+  };
+
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />}>
+          <ThemedView style={styles.headerRow}>
+            <ThemedText type="title" style={styles.pageTitle}>Matakuliah</ThemedText>
+            <Button title="+ Tambah" size="sm" onPress={openCreate} />
+          </ThemedView>
+
+          {loading ? (
+            <EmptyState title="Memuat..." loading />
+          ) : data.length === 0 ? (
+            <EmptyState title="Belum ada matakuliah" message="Tambahkan matakuliah baru" />
+          ) : (
+            <ThemedView style={styles.list}>
+              {data.map((m) => (
+                <Card key={m.id} style={styles.card}>
+                  <ThemedView style={styles.cardContent}>
+                    <ThemedView>
+                      <ThemedText style={styles.cardTitle}>{m.nama}</ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {m.kode} · {m.sks} SKS
+                      </ThemedText>
+                    </ThemedView>
+                    <ThemedView style={styles.cardActions}>
+                      <TouchableOpacity onPress={() => openEdit(m)}>
+                        <ThemedText themeColor="tint" type="smallBold">Edit</ThemedText>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDelete(m.id, m.nama)}>
+                        <ThemedText themeColor="destructive" type="smallBold">Hapus</ThemedText>
+                      </TouchableOpacity>
+                    </ThemedView>
+                  </ThemedView>
+                </Card>
+              ))}
+            </ThemedView>
+          )}
+        </ScrollView>
+
+        <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+          <SafeAreaView style={styles.modalContainer}>
+            <ScrollView contentContainerStyle={styles.modalScroll}>
+              <ThemedView style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <ThemedText themeColor="tint">Batal</ThemedText>
+                </TouchableOpacity>
+                <ThemedText type="subtitle" style={styles.modalTitle}>
+                  {editing ? 'Edit' : 'Tambah'} Matakuliah
+                </ThemedText>
+                <TouchableOpacity onPress={handleSave} disabled={saving}>
+                  <ThemedText themeColor="tint" style={{ fontWeight: '600' }}>{saving ? '...' : 'Simpan'}</ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+              <ThemedView style={styles.form}>
+                <Input label="Nama" value={formNama} onChangeText={setFormNama} placeholder="Nama matakuliah" />
+                <Input label="Kode" value={formKode} onChangeText={setFormKode} placeholder="Contoh: IF-101" />
+                <Input label="SKS" value={formSks} onChangeText={setFormSks} placeholder="3" keyboardType="numeric" />
+              </ThemedView>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
+  scroll: { padding: Spacing.four, gap: Spacing.four, paddingBottom: Spacing.six * 2 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  pageTitle: { fontSize: 32, lineHeight: 40 },
+  list: { gap: Spacing.two },
+  card: {},
+  cardContent: { gap: Spacing.three },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+  cardActions: { flexDirection: 'row', gap: Spacing.four },
+  modalContainer: { flex: 1 },
+  modalScroll: { padding: Spacing.four, gap: Spacing.four },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { fontSize: 20 },
+  form: { gap: Spacing.three },
+});
