@@ -1,10 +1,21 @@
 import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
+import { Platform, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useTheme } from '@/hooks/use-theme';
+import { useRoleGuard } from '@/hooks/use-role-guard';
+import { ThemedView } from '@/components/themed-view';
 
 export default function DosenLayout() {
   const theme = useTheme();
+  const { isAllowed } = useRoleGuard('dosen');
+
+  if (!isAllowed) {
+    return (
+      <ThemedView style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" />
+      </ThemedView>
+    );
+  }
 
   return (
     <Tabs
