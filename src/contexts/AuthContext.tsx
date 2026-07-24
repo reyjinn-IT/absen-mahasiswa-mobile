@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { router } from 'expo-router';
 import { authService, type User } from '@/services/auth';
-import { setToken, getToken } from '@/services/api';
+import { setToken, initAuthToken } from '@/services/api';
 
 interface AuthState {
   user: User | null;
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const init = async () => {
       try {
-        const token = getToken();
+        const token = await initAuthToken();
         if (token) {
           await refreshProfile();
         }

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
@@ -72,7 +73,7 @@ export default function AbsenScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchKelas(); }} />}>
           <ThemedView style={styles.headerRow}>
             <ThemedText type="title" style={styles.pageTitle}>Absen Masuk</ThemedText>
-            <TouchableOpacity onPress={() => { /* navigate to izin */ }}>
+            <TouchableOpacity onPress={() => router.push('/(mahasiswa)/izin')}>
               <ThemedText themeColor="tint" type="smallBold">+ Izin</ThemedText>
             </TouchableOpacity>
           </ThemedView>
