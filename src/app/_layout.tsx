@@ -1,11 +1,14 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemePreferenceProvider, useThemePreference } from '@/contexts/ThemeContext';
 
-export default function RootLayout() {
+function AppShell() {
+  const { colorScheme } = useThemePreference();
+
   return (
-    <AuthProvider>
-      <StatusBar style="auto" />
+    <>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
@@ -13,6 +16,16 @@ export default function RootLayout() {
         <Stack.Screen name="(dosen)" />
         <Stack.Screen name="(mahasiswa)" />
       </Stack>
-    </AuthProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemePreferenceProvider>
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
+    </ThemePreferenceProvider>
   );
 }

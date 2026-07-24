@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ListItem } from '@/components/ui/list-item';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { mahasiswaService } from '@/services/mahasiswa';
@@ -79,6 +80,15 @@ export default function ProfilScreen() {
               )}
             </ThemedView>
           </Card>
+
+          <ThemedView style={styles.section}>
+            <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
+              TAMPILAN
+            </ThemedText>
+            <Card>
+              <ThemeToggle />
+            </Card>
+          </ThemedView>
 
           <ThemedView style={styles.section}>
             <ListItem
@@ -156,6 +166,7 @@ const styles = StyleSheet.create({
   },
   roleText: { color: '#007AFF', fontSize: 12 },
   section: { gap: 0 },
+  sectionLabel: { marginBottom: Spacing.two, textTransform: 'uppercase', letterSpacing: 0.5 },
   form: { gap: Spacing.three },
   logoutSection: { marginTop: Spacing.four },
 });
